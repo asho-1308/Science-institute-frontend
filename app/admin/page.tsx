@@ -17,7 +17,7 @@ import styles from "./admin.module.css";
 
 // --- Types ---
 type Category = "PERSONAL" | "EXTERNAL";
-type ClassType = "EXTERNAL" | "PERSONAL";
+type ClassType = "Theory" | "Revision" | "Paper Class";
 
 interface ClassSession {
   _id?: string;
@@ -28,8 +28,8 @@ interface ClassSession {
   endTime: string;
   day: string;
   location: string;
-  category?: Category;
-  type?: ClassType;
+  category: Category;
+  type: ClassType;
   classNumber?: number;
 }
 
@@ -37,7 +37,8 @@ interface FormState {
   day: string;
   grade: string;
   subject: string;
-  type: ClassType;
+  category: Category;
+  classType: ClassType;
   location: string;
   startTime: string;
   endTime: string;
@@ -61,17 +62,23 @@ export default function AdminPanel() {
     const fetchClasses = async () => {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5000/timetable');
+        console.log('Fetching classes from backend...');
+        const res = await fetch('https://science-institute-backend.vercel.app/timetable');
+        console.log('Fetch response status:', res.status);
         if (!res.ok) throw new Error('Failed to fetch classes.');
         const data: ClassSession[] = await res.json();
+        console.log('Raw data received:', data);
         
         const formattedData = data.map((cls: ClassSession) => ({
           ...cls,
           startTime: new Date(cls.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           endTime: new Date(cls.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
         }));
+        console.log('Formatted data:', formattedData);
         setClasses(formattedData.sort((a, b) => a.startTime.localeCompare(b.startTime)));
+        console.log('Classes set successfully');
       } catch (err) {
+        console.error('Error fetching classes:', err);
         setError(err instanceof Error ? err.message : String(err));
       } finally {
         setLoading(false);
@@ -85,7 +92,8 @@ export default function AdminPanel() {
     day: "Monday",
     grade: "Grade 10",
     subject: "Science",
-    type: "EXTERNAL",
+    category: "EXTERNAL",
+    classType: "Theory",
     location: EXTERNAL_INSTITUTES[0],
     startTime: "",
     endTime: ""
@@ -95,11 +103,11 @@ export default function AdminPanel() {
     const target = e.target as HTMLInputElement | HTMLSelectElement;
     const { name, value } = target;
     
-    if (name === "type") {
-      const val = value as ClassType;
+    if (name === "category") {
+      const val = value as Category;
       setFormData(prev => ({
         ...prev,
-        type: val,
+        category: val,
         location: val === "EXTERNAL" ? EXTERNAL_INSTITUTES[0] : PERSONAL_LOCATIONS[0]
       }));
     } else {
@@ -182,10 +190,12 @@ export default function AdminPanel() {
         title: `${formData.subject} - ${formData.grade}`,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
+        category: formData.category,
+        type: formData.classType,
       };
       if (!isNaN(parsedClassNumber)) payload.classNumber = parsedClassNumber;
 
-      const url = editingId ? `http://localhost:5000/timetable/${editingId}` : 'http://localhost:5000/timetable';
+      const url = editingId ? `https://science-institute-backend.vercel.app/timetable/${editingId}` : 'https://science-institute-backend.vercel.app/timetable';
       const method = editingId ? 'PUT' : 'POST';
 
       const res = await fetch(url, { method, headers, body: JSON.stringify(payload) });
@@ -222,7 +232,7 @@ export default function AdminPanel() {
       const headers: Record<string,string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const res = await fetch(`http://localhost:5000/timetable/${id}`, { method: 'DELETE', headers });
+      const res = await fetch(`https://science-institute-backend.vercel.app/timetable/${id}`, { method: 'DELETE', headers });
       if (!res.ok) throw new Error('Failed to delete class');
       setClasses(classes.filter(c => c._id !== id));
     } catch (err) {
@@ -236,7 +246,8 @@ export default function AdminPanel() {
       day: cls.day || 'Monday',
       grade: cls.grade || 'Grade 10',
       subject: cls.subject || cls.title || 'Science',
-      type: cls.category === 'PERSONAL' ? 'PERSONAL' : 'EXTERNAL',
+      category: cls.category || 'EXTERNAL',
+      classType: cls.type || 'Theory',
       location: cls.location || EXTERNAL_INSTITUTES[0],
       startTime: cls.startTime || '',
       endTime: cls.endTime || '',
@@ -309,7 +320,7 @@ export default function AdminPanel() {
                         <span className={styles.subjectTitle}>
                           {classNum ? `Class ${classNum}` : (cls.grade || '')}
                         </span>
-                        {cls.type === 'EXTERNAL' ? (
+                        {cls.category === 'EXTERNAL' ? (
                            <span className={`${styles.badge} ${styles.badgeExternal}`}>
                              <Lock size={10} style={{marginRight:3}}/> Fixed
                            </span>
@@ -361,17 +372,26 @@ export default function AdminPanel() {
               {error && <div className={styles.errorMsg}><AlertTriangle size={18} /> {error}</div>}
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>Class Type</label>
+                <label className={styles.label}>Category</label>
                 <div className={styles.radioGroup}>
                   <label className={styles.radioLabel}>
-                    <input type="radio" name="type" value="EXTERNAL" checked={formData.type === "EXTERNAL"} onChange={handleChange} />
+                    <input type="radio" name="category" value="EXTERNAL" checked={formData.category === "EXTERNAL"} onChange={handleChange} />
                     <span>External (Fixed)</span>
                   </label>
                   <label className={styles.radioLabel}>
-                    <input type="radio" name="type" value="PERSONAL" checked={formData.type === "PERSONAL"} onChange={handleChange} />
+                    <input type="radio" name="category" value="PERSONAL" checked={formData.category === "PERSONAL"} onChange={handleChange} />
                     <span>Personal Tuition</span>
                   </label>
                 </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Class Type</label>
+                <select name="classType" className={styles.select} value={formData.classType} onChange={handleChange}>
+                  <option value="Theory">Theory</option>
+                  <option value="Revision">Revision</option>
+                  <option value="Paper Class">Paper Class</option>
+                </select>
               </div>
 
               <div className={styles.row}>
@@ -392,7 +412,7 @@ export default function AdminPanel() {
               <div className={styles.formGroup}>
                 <label className={styles.label}>Location</label>
                 <select name="location" className={styles.select} value={formData.location} onChange={handleChange}>
-                  {formData.type === "EXTERNAL" 
+                  {formData.category === "EXTERNAL"
                     ? EXTERNAL_INSTITUTES.map(l => <option key={l} value={l}>{l}</option>)
                     : PERSONAL_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)
                   }

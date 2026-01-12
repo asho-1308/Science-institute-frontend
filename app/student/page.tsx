@@ -40,19 +40,25 @@ export default function StudentDashboard() {
   useEffect(() => {
     const fetchClasses = async () => {
       setLoading(true);
+      console.log('Fetching classes for student dashboard...');
       try {
         const params = new URLSearchParams({ category: 'PERSONAL', day: selectedDay });
-        const res = await fetch(`http://localhost:5000/timetable?${params.toString()}`);
+        console.log('Fetch URL:', `https://science-institute-backend.vercel.app/timetable?${params.toString()}`);
+        const res = await fetch(`https://science-institute-backend.vercel.app/timetable?${params.toString()}`);
+        console.log('Fetch response status:', res.status);
         if (!res.ok) throw new Error('Failed to fetch schedule');
         const data: StudentClass[] = await res.json();
+        console.log('Raw data received:', data);
         // format start/end times for display
         const formatted = data.map(d => ({
           ...d,
           startTime: new Date(d.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
           endTime: new Date(d.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
         }));
+        console.log('Formatted data:', formatted);
         setClasses(formatted);
       } catch (err) {
+        console.error('Error fetching classes:', err);
         if (err instanceof Error) setError(err.message);
         else setError(String(err));
       } finally {
