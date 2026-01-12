@@ -1,0 +1,458 @@
+/* app/admin/admin.module.css */
+
+.container {
+  min-height: 100vh;
+  background-color: #f1f5f9; /* Slate 100 */
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #334155;
+  padding-bottom: 80px; /* Extra space for scrolling on mobile */
+}
+
+/* --- Top Navigation --- */
+.navbar {
+  background-color: #1e293b; /* Slate 900 */
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.brand {
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  white-space: nowrap;
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: #94a3b8; /* Slate 400 */
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.backLink:hover {
+  color: white;
+}
+
+.addButton {
+  background-color: #4f46e5; /* Indigo 600 */
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.addButton:hover {
+  background-color: #4338ca;
+}
+
+/* --- Main Layout --- */
+.main {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.tipBox {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  color: #1e40af;
+  font-size: 0.9rem;
+}
+
+/* Grouping by Day */
+.dayGroup {
+  margin-bottom: 2rem;
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.dayHeader {
+  background-color: #f8fafc;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* List of Classes */
+.classList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.classItem {
+  display: flex;
+  align-items: center; /* Center items vertically */
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.1s;
+  position: relative;
+  gap: 1.5rem; /* Space between Time, Info, Actions */
+}
+
+.classItem:last-child {
+  border-bottom: none;
+}
+
+.classItem:hover {
+  background-color: #f8fafc;
+}
+
+/* Left border indicator for each class */
+.locViyabarimoolaiInstitute { border-left: 5px solid #ef4444; } /* red */
+.locPuttalai { border-left: 5px solid #2563eb; } /* blue */
+.locThumbasiddy { border-left: 5px solid #16a34a; } /* green */
+.locExcellentInstitute { border-left: 5px solid #f59e0b; } /* amber */
+
+/* Class Item Internal Layout */
+.itemHeader {
+  display: contents; /* On desktop, children flow normally */
+}
+
+.timeBox {
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+}
+
+.timeText {
+  font-weight: 700;
+  color: #334155;
+  font-size: 1.1rem;
+}
+
+.durationText {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.infoBox {
+  flex: 1; /* Takes remaining space */
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.subjectRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.subjectTitle {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #334155;
+}
+
+/* Badges */
+.badge {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  letter-spacing: 0.5px;
+}
+.badgeExternal { background: #e0f2fe; color: #0369a1; }
+.badgePersonal { background: #f0fdf4; color: #15803d; }
+
+.locationRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.icon {
+  opacity: 0.7;
+}
+
+/* Actions */
+.actionGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Visibility toggles for responsive design */
+.mobileActions { display: none; }
+.desktopActions { display: flex; }
+
+.actionBtn {
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btnEdit:hover { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+.btnDelete:hover { background-color: #fef2f2; color: #dc2626; border-color: #fecaca; }
+
+/* --- MODAL (The Form) --- */
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  backdrop-filter: blur(2px);
+  padding: 1rem; /* Prevent touching screen edges */
+}
+
+.modal {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh; /* Don't overflow screen height */
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modalHeader {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0; /* Header stays fixed */
+}
+
+.modalTitle { margin: 0; font-size: 1.25rem; color: #1e293b; }
+
+.closeBtn {
+  background: none; border: none; cursor: pointer; color: #94a3b8; display: flex;
+}
+
+.modalBody {
+  padding: 1.5rem;
+  overflow-y: auto; /* Scrollable body */
+}
+
+.formGroup { margin-bottom: 1.25rem; }
+
+.label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #475569;
+}
+
+.input, .select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  background-color: white;
+}
+
+.input:focus, .select:focus {
+  outline: 2px solid #4f46e5;
+  border-color: transparent;
+}
+
+.radioGroup {
+  display: flex;
+  gap: 1.5rem;
+}
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.row { display: flex; gap: 1rem; }
+
+.errorMsg {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  border: 1px solid #fecaca;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modalFooter {
+  padding: 1rem 1.5rem;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-shrink: 0; /* Footer stays fixed */
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.btnCancel {
+  background: white; border: 1px solid #cbd5e1; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; color: #475569; font-weight: 500;
+}
+.btnSave {
+  background: #4f46e5; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-weight: 600;
+}
+
+/* --- Mobile Responsiveness (Max width: 640px) --- */
+@media (max-width: 640px) {
+  
+  /* Navbar adjustments */
+  .navbar {
+    padding: 0.75rem 1rem;
+  }
+  
+  .navText { display: none; } /* Hide "Back" text */
+  .btnText { display: none; } /* Hide "Add Class" text */
+  
+  .addButton {
+    padding: 0.5rem; /* Icon only square button */
+  }
+
+  /* Main Container */
+  .main {
+    margin: 1rem auto;
+    padding: 0 1rem;
+  }
+
+  .dayHeader {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  /* Card Layout Reorganization */
+  .classItem {
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  /* 1. Top Row: Time + Edit/Delete Buttons */
+  .itemHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .timeBox {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  /* Toggle Action Buttons */
+  .desktopActions { display: none; }
+  .mobileActions { display: flex; } /* Show these in top right */
+
+  /* 2. Middle Row: Info */
+  .infoBox {
+    padding-left: 0;
+    width: 100%;
+  }
+
+  .subjectTitle {
+    font-size: 1rem;
+  }
+  
+  .badge {
+    margin-left: auto; /* Push badge to far right if space allows */
+  }
+
+  /* Modal Mobile Adjustments */
+  .modalOverlay {
+    padding: 0;
+    align-items: flex-end; /* Sheet animation from bottom */
+  }
+
+  .modal {
+    max-height: 85vh; /* Almost full height */
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    width: 100%;
+  }
+
+  .modalBody {
+    padding: 1.25rem;
+  }
+
+  .row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .formGroup {
+    margin-bottom: 1rem;
+  }
+
+  .modalFooter {
+    border-radius: 0;
+  }
+  
+  .btnCancel, .btnSave {
+    flex: 1; /* Full width buttons */
+    text-align: center;
+    padding: 0.8rem;
+  }
+}
