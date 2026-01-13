@@ -100,6 +100,11 @@ export default function StudentDashboard() {
     }
   };
 
+  // Deterministic color palette + helper per class (same algorithm as admin)
+  const COLORS = ['#EF4444','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EC4899','#06B6D4','#F97316'];
+  const hashString = (s: string) => { let h = 5381; for (let i=0;i<s.length;i++) h=(h*33) ^ s.charCodeAt(i); return (h>>>0).toString(16); };
+  const getColorForKey = (key?: string) => { const k = key||''; if(!k) return COLORS[0]; const hash = parseInt(hashString(k).slice(-8),16); return COLORS[hash % COLORS.length]; };
+
   return (
     <div className={styles.container}>
       
@@ -163,10 +168,11 @@ export default function StudentDashboard() {
                 })();
                 const raw = cls.subject ?? cls.title ?? '';
                 const cleaned = cleanTitle(raw);
+                const color = getColorForKey(cls._id || cleaned);
                 return (
                   <div key={cls._id || cls.title} className={styles.classCard}>
                     {/* Colored Strip */}
-                    <div className={`${styles.cardStrip} ${getStripStyle(cls.type)}`}></div>
+                    <div className={styles.cardStrip} style={{ backgroundColor: color }}></div>
 
                     {/* Left: Time */}
                     <div className={styles.timeCol}>
