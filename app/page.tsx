@@ -56,6 +56,11 @@ export default function Home() {
     fetchToday();
   }, [todayName]);
 
+  // Deterministic color palette + helper per class (share same algorithm as admin)
+  const COLORS = ['#EF4444','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EC4899','#06B6D4','#F97316'];
+  const hashString = (s: string) => { let h = 5381; for (let i=0;i<s.length;i++) h=(h*33) ^ s.charCodeAt(i); return (h>>>0).toString(16); };
+  const getColorForKey = (key?: string) => { const k = key||''; if(!k) return COLORS[0]; const hash = parseInt(hashString(k).slice(-8),16); return COLORS[hash % COLORS.length]; };
+
   return (
     <div className={styles.container}>
       
@@ -167,6 +172,7 @@ export default function Home() {
                   
                   <div className={styles.infoCol}>
                     <h4 className={styles.subjectTitle}>
+                      <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 4, backgroundColor: getColorForKey(cls.id || cls.subject), marginRight: 8 }}></span>
                       {cls.subject}
                     </h4>
                     <div className={styles.metaInfo}>

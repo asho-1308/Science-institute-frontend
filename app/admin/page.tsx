@@ -95,11 +95,17 @@ export default function AdminPanel() {
         const data: ClassSession[] = await res.json();
         console.log('Raw data received:', data);
         
-        const formattedData = data.map((cls: ClassSession) => ({
-          ...cls,
-          startTime: new Date(cls.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          endTime: new Date(cls.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-        }));
+        const formattedData = data.map((cls: ClassSession) => {
+          const subject = cls.subject || (cls.title ? cls.title.replace(/\s*-\s*Grade\s*\d+/i, '').trim() : undefined);
+          const grade = (cls as any).grade || (cls.classNumber ? `Grade ${cls.classNumber}` : undefined);
+          return {
+            ...cls,
+            subject,
+            grade,
+            startTime: new Date(cls.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+            endTime: new Date(cls.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          } as ClassSession;
+        });
         console.log('Formatted data:', formattedData);
         setClasses(formattedData.sort((a, b) => a.startTime.localeCompare(b.startTime)));
         console.log('Classes set successfully');
@@ -251,7 +257,17 @@ export default function AdminPanel() {
       console.log('handleSave: response', { status: res.status, ok: res.ok, body: result });
 
       if (!res.ok) {
-        const message = result && result.message ? result.message : (result.text || `Failed to save (status ${res.status})`);
+        let message = result && result.message ? result.message : (result.text || `Failed to save (status ${res.status})`);
+        if (result && result.overlap) {
+          try {
+            const o = result.overlap;
+            const s = new Date(o.startTime).toLocaleString();
+            const e = new Date(o.endTime).toLocaleString();
+            message += `\nConflicting session: ${o.title} at ${o.location} (${s} - ${e})`;
+          } catch (e) {
+            // ignore formatting errors
+          }
+        }
         throw new Error(message);
       }
 
@@ -325,19 +341,29 @@ export default function AdminPanel() {
     return t.replace(/\s*-\s*Grade\s*\d+/gi, '').trim();
   };
 
-  const handleEdit = (cls: ClassSession) => {
-    setEditingId(cls._id || null);
-    setFormData({
-      day: cls.day || 'Monday',
-      grade: cls.grade || 'Grade 10',
-      subject: cls.subject || extractSubjectFromTitle(cls.title) || 'Science',
-      category: cls.category || 'EXTERNAL',
-      classType: cls.type || 'Theory',
-      location: cls.location || EXTERNAL_INSTITUTES[0],
-      startTime: normalizeTimeForInput(cls.startTime),
-      endTime: normalizeTimeForInput(cls.endTime),
-    });
-    setIsModalOpen(true);
+  const handleEdit = async (cls: ClassSession) => {
+    // Fetch authoritative record from backend to avoid client-side mismatches
+    try {
+      const id = cls._id;
+      if (!id) return;
+      const res = await fetch(`${BACKEND_URL}/timetable/${id}`);
+      if (!res.ok) throw new Error('Failed to fetch class details');
+      const data: ClassSession = await res.json();
+      setEditingId(data._id || null);
+      setFormData({
+        day: data.day || 'Monday',
+        grade: (data as any).grade || (data.classNumber ? `Grade ${data.classNumber}` : 'Grade 10'),
+        subject: data.subject || (data.title ? data.title.replace(/\s*-\s*Grade\s*\d+/i, '').trim() : 'Science'),
+        category: data.category || 'EXTERNAL',
+        classType: data.type || 'Theory',
+        location: data.location || EXTERNAL_INSTITUTES[0],
+        startTime: normalizeTimeForInput(data.startTime),
+        endTime: normalizeTimeForInput(data.endTime),
+      });
+      setIsModalOpen(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
   };
 
   // Prevent layout shift when modal opens by locking body scroll
