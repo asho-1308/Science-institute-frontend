@@ -58,6 +58,31 @@ export default function AdminPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Color palette and helper to assign a deterministic color per class
+  const COLORS = [
+    '#EF4444', // red
+    '#F59E0B', // amber
+    '#10B981', // green
+    '#3B82F6', // blue
+    '#8B5CF6', // violet
+    '#EC4899', // pink
+    '#06B6D4', // cyan
+    '#F97316', // orange
+  ];
+
+  const hashString = (s: string) => {
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = (h * 33) ^ s.charCodeAt(i);
+    return (h >>> 0).toString(16);
+  };
+
+  const getColorForKey = (key?: string) => {
+    const k = key || '';
+    if (!k) return COLORS[0];
+    const hash = parseInt(hashString(k).slice(-8), 16);
+    return COLORS[hash % COLORS.length];
+  };
+
   // --- Fetch classes ---
   React.useEffect(() => {
     const fetchClasses = async () => {
@@ -186,9 +211,13 @@ export default function AdminPanel() {
       const gradeMatch = formData.grade.match(/\d+/);
       const parsedClassNumber = gradeMatch ? parseInt(gradeMatch[0], 10) : NaN;
 
+      // Clean subject to avoid duplicate grade fragments in title
+      const cleanedSubject = (formData.subject || '').replace(/\s*-\s*Grade\s*\d+/gi, '').trim();
+
       const payload: any = {
         ...formData,
-        title: `${formData.subject} - ${formData.grade}`,
+        subject: cleanedSubject,
+        title: `${cleanedSubject} - ${formData.grade}`,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
         category: formData.category,
@@ -199,10 +228,32 @@ export default function AdminPanel() {
       const url = editingId ? `${BACKEND_URL}/timetable/${editingId}` : `${BACKEND_URL}/timetable`;
       const method = editingId ? 'PUT' : 'POST';
 
-      const res = await fetch(url, { method, headers, body: JSON.stringify(payload) });
-      const result = await res.json();
+      // Debug: log request details (do not print raw token)
+      console.log('handleSave: sending request', {
+        url,
+        method,
+        payload,
+        hasToken: !!token,
+        headers: { 'Content-Type': headers['Content-Type'], Authorization: token ? 'Bearer [REDACTED]' : undefined }
+      });
 
-      if (!res.ok) throw new Error(result.message || 'Failed to save.');
+      const res = await fetch(url, { method, headers, body: JSON.stringify(payload) });
+
+      // Read response text then try to parse JSON for robust logging
+      const resText = await res.text();
+      let result: any;
+      try {
+        result = resText ? JSON.parse(resText) : {};
+      } catch (e) {
+        result = { text: resText };
+      }
+
+      console.log('handleSave: response', { status: res.status, ok: res.ok, body: result });
+
+      if (!res.ok) {
+        const message = result && result.message ? result.message : (result.text || `Failed to save (status ${res.status})`);
+        throw new Error(message);
+      }
 
       const formatted = {
         ...result,
@@ -241,20 +292,74 @@ export default function AdminPanel() {
     }
   };
 
+  // Normalize times to `HH:MM` for `input[type=time]` when editing
+  const normalizeTimeForInput = (time?: string) => {
+    if (!time) return "";
+    if (/^\d{1,2}:\d{2}$/.test(time)) {
+      const parts = time.split(':').map(p => p.padStart(2, '0'));
+      return `${parts[0]}:${parts[1]}`;
+    }
+    const ampm = time.match(/(AM|PM)$/i);
+    if (ampm) {
+      const m = time.match(/(\d{1,2}):(\d{2})/);
+      if (!m) return "";
+      let h = parseInt(m[1], 10);
+      const min = m[2];
+      const isPM = /PM/i.test(ampm[0]);
+      if (isPM && h !== 12) h += 12;
+      if (!isPM && h === 12) h = 0;
+      return `${String(h).padStart(2, '0')}:${min}`;
+    }
+    const d = new Date(time);
+    if (!isNaN(d.getTime())) {
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+    return "";
+  };
+
+  // Extract clean subject from title by removing any " - Grade X" suffixes
+  const extractSubjectFromTitle = (t?: string) => {
+    if (!t) return '';
+    return t.replace(/\s*-\s*Grade\s*\d+/gi, '').trim();
+  };
+
   const handleEdit = (cls: ClassSession) => {
     setEditingId(cls._id || null);
     setFormData({
       day: cls.day || 'Monday',
       grade: cls.grade || 'Grade 10',
-      subject: cls.subject || cls.title || 'Science',
+      subject: cls.subject || extractSubjectFromTitle(cls.title) || 'Science',
       category: cls.category || 'EXTERNAL',
       classType: cls.type || 'Theory',
       location: cls.location || EXTERNAL_INSTITUTES[0],
-      startTime: cls.startTime || '',
-      endTime: cls.endTime || '',
+      startTime: normalizeTimeForInput(cls.startTime),
+      endTime: normalizeTimeForInput(cls.endTime),
     });
     setIsModalOpen(true);
   };
+
+  // Prevent layout shift when modal opens by locking body scroll
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const applyLock = () => {
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.overflow = 'hidden';
+      if (scrollBarWidth) document.body.style.paddingRight = `${scrollBarWidth}px`;
+    };
+
+    const removeLock = () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+
+    if (isModalOpen) applyLock();
+    else removeLock();
+
+    return () => removeLock();
+  }, [isModalOpen]);
 
   return (
     <div className={styles.container}>
@@ -298,7 +403,11 @@ export default function AdminPanel() {
                     : 'locExcellentInstitute';
                   
                   return (
-                  <li key={cls._id} className={`${styles.classItem} ${styles[locClass]}`}>
+                  <li
+                    key={cls._id}
+                    className={`${styles.classItem} ${styles[locClass]}`}
+                    style={{ borderLeft: `4px solid ${getColorForKey(cls._id || cls.title || (cls.subject || ''))}` }}
+                  >
                     
                     <div className={styles.itemHeader}>
                         <div className={styles.timeBox}>
