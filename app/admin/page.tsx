@@ -13,6 +13,7 @@ import {
   X,
   AlertTriangle
 } from "lucide-react";
+import { BACKEND_URL } from "../../config";
 import styles from "./admin.module.css";
 
 // --- Types ---
@@ -63,7 +64,7 @@ export default function AdminPanel() {
       try {
         setLoading(true);
         console.log('Fetching classes from backend...');
-        const res = await fetch('https://science-institute-backend.vercel.app/timetable');
+        const res = await fetch(`${BACKEND_URL}/timetable`);
         console.log('Fetch response status:', res.status);
         if (!res.ok) throw new Error('Failed to fetch classes.');
         const data: ClassSession[] = await res.json();
@@ -195,7 +196,7 @@ export default function AdminPanel() {
       };
       if (!isNaN(parsedClassNumber)) payload.classNumber = parsedClassNumber;
 
-      const url = editingId ? `https://science-institute-backend.vercel.app/timetable/${editingId}` : 'https://science-institute-backend.vercel.app/timetable';
+      const url = editingId ? `${BACKEND_URL}/timetable/${editingId}` : `${BACKEND_URL}/timetable`;
       const method = editingId ? 'PUT' : 'POST';
 
       const res = await fetch(url, { method, headers, body: JSON.stringify(payload) });
@@ -232,7 +233,7 @@ export default function AdminPanel() {
       const headers: Record<string,string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const res = await fetch(`https://science-institute-backend.vercel.app/timetable/${id}`, { method: 'DELETE', headers });
+      const res = await fetch(`${BACKEND_URL}/timetable/${id}`, { method: 'DELETE', headers });
       if (!res.ok) throw new Error('Failed to delete class');
       setClasses(classes.filter(c => c._id !== id));
     } catch (err) {
