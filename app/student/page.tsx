@@ -10,6 +10,7 @@ import {
   Clock, 
   CalendarDays 
 } from "lucide-react";
+import { BACKEND_URL } from "../../config";
 import styles from "./student.module.css";
 
 // We'll fetch schedule from backend and display only PERSONAL classes
@@ -43,8 +44,8 @@ export default function StudentDashboard() {
       console.log('Fetching classes for student dashboard...');
       try {
         const params = new URLSearchParams({ category: 'PERSONAL', day: selectedDay });
-        console.log('Fetch URL:', `https://science-institute-backend.vercel.app/timetable?${params.toString()}`);
-        const res = await fetch(`https://science-institute-backend.vercel.app/timetable?${params.toString()}`);
+        console.log('Fetch URL:', `${BACKEND_URL}/timetable?${params.toString()}`);
+        const res = await fetch(`${BACKEND_URL}/timetable?${params.toString()}`);
         console.log('Fetch response status:', res.status);
         if (!res.ok) throw new Error('Failed to fetch schedule');
         const data: StudentClass[] = await res.json();

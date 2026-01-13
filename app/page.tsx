@@ -11,6 +11,7 @@ import {
   MapPin, 
   BookOpen 
 } from "lucide-react";
+import { BACKEND_URL } from "../config";
 import styles from "./home.module.css";
 
 export default function Home() {
@@ -31,7 +32,7 @@ export default function Home() {
     const fetchToday = async () => {
       try {
         const params = new URLSearchParams({ category: 'PERSONAL', day: todayName });
-        const res = await fetch(`http://localhost:5000/timetable?${params.toString()}`);
+        const res = await fetch(`${BACKEND_URL}/timetable?${params.toString()}`);
         if (!res.ok) return;
         const data = await res.json();
         const mapped = data.map((d: any) => {
