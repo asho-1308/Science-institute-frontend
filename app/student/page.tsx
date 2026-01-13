@@ -85,6 +85,12 @@ export default function StudentDashboard() {
     }
   };
 
+  // Clean title/subject to remove redundant grade suffixes like " - Grade 10"
+  const cleanTitle = (s?: string) => {
+    if (!s) return '';
+    return s.replace(/\s*-\s*Grade\s*\d+/gi, '').trim();
+  };
+
   // Helper to get strip color style
   const getStripStyle = (type?: string) => {
     switch (type) {
@@ -155,6 +161,8 @@ export default function StudentDashboard() {
                   const m = (cls.title || cls.subject || '').match(/\d+/);
                   return m ? parseInt(m[0], 10) : undefined;
                 })();
+                const raw = cls.subject ?? cls.title ?? '';
+                const cleaned = cleanTitle(raw);
                 return (
                   <div key={cls._id || cls.title} className={styles.classCard}>
                     {/* Colored Strip */}
@@ -169,7 +177,7 @@ export default function StudentDashboard() {
                     {/* Right: Details */}
                     <div className={styles.detailsCol}>
                       <div className={styles.subjectRow}>
-                        <h3 className={styles.subjectName}>{classNum ? `Class ${classNum} — ${cls.subject ?? cls.title}` : (cls.subject ?? cls.title)}</h3>
+                        <h3 className={styles.subjectName}>{classNum ? `Class ${classNum} — ${cleaned}` : cleaned}</h3>
                         <span className={`${styles.badge} ${getBadgeStyle(cls.type)}`}>
                           {cls.type}
                         </span>
