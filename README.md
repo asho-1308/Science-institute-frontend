@@ -1,136 +1,92 @@
-# Timetable App Frontend
+# Timetable App — Frontend (Next.js)
 
-A modern React/Next.js frontend for the Timetable Management System.
+This Next.js application is the user-facing portion of the Timetable Management System. It provides an Admin panel for managing schedules and a Student dashboard to view personal timetables.
 
 ## Features
 
-- **Admin Panel**: Manage class schedules with an intuitive interface
-- **Student Dashboard**: View personalized class timetables
-- **Live Schedule Preview**: Real-time display of today's classes
-- **Responsive Design**: Works on desktop and mobile devices
-- **Class Management**: Add, edit, and delete class sessions
-- **Category Support**: Personal tuition and external institute classes
-- **Class Types**: Theory, Revision, and Paper Class support
-- **Medium Support**: Tamil and English medium classes
+- Admin Panel: create/edit/delete class sessions, detect time conflicts
+- Student Dashboard: view classes by day, filter personal sessions
+- Live preview on the home page for today's schedule
+- Class metadata includes type and medium (Tamil/English)
+- Responsive design and lightweight UI using CSS Modules
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: CSS Modules
-- **Icons**: Lucide React
-- **State Management**: React Hooks
+- Next.js (App Router)
+- TypeScript
+- CSS Modules
+- Lucide React icons
 
-## Getting Started
+## Prerequisites
 
-### Prerequisites
+- Node.js 18+ (recommended)
+- Backend API running and reachable (see `backend/README.md`)
 
-- Node.js (v18 or higher)
-- npm or yarn
-- Backend server running (see backend README)
+## Setup & Run
 
-### Installation
+1. Install dependencies
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Create a `.env.local` file in the frontend directory:
-   ```
-   NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
-   ```
-
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
-
-## Project Structure
-
-```
-frontend/
-├── app/                    # Next.js app directory
-│   ├── admin/             # Admin panel pages
-│   ├── student/           # Student dashboard
-│   ├── globals.css        # Global styles
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Home page
-├── config.ts              # Configuration constants
-├── package.json           # Dependencies
-└── tsconfig.json          # TypeScript configuration
+```bash
+cd frontend
+npm install
 ```
 
-## Pages
+2. Create `.env.local` in `frontend/` with the backend URL:
 
-- **Home (`/`)**: Landing page with live schedule preview
-- **Student Dashboard (`/student`)**: View weekly schedule by day
-- **Admin Login (`/admin-login`)**: Admin authentication
-- **Admin Panel (`/admin`)**: Full timetable management interface
+```bash
+NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+```
 
-## Features Overview
+3. Start development server
 
-### Admin Panel
-- Add new class sessions with detailed information
-- Edit existing classes
-- Delete classes with confirmation
-- Filter by category (Personal/External)
-- Set class types (Theory/Revision/Paper Class)
-- Choose medium (Tamil/English)
-- Time conflict detection
-- Visual schedule overview
+```bash
+npm run dev
+```
 
-### Student Dashboard
-- View classes by day of the week
-- Filter personal tuition classes
-- Clean, card-based layout
-- Time and location information
+Open `http://localhost:3000` in your browser.
 
-### Home Page
-- Live preview of today's schedule
-- Quick navigation to student/admin views
-- Real-time clock display
+## Important Pages
 
-## Development
+- `/` — Home (live schedule preview)
+- `/student` — Student dashboard (week view)
+- `/admin-login` — Admin login
+- `/admin` — Admin panel (requires login)
 
-### Available Scripts
+## How to add a class (Admin)
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+1. Login to the Admin panel
+2. Click "Add Class"
+3. Fill in: Category (External/Personal), Class Type (Theory/Revision/Paper Class), Medium (English/Tamil), Grade, Day, Location, Start/End time
+4. Save — the backend validates time overlaps and returns errors if conflicts exist
 
-### Environment Variables
+## Frontend development notes
 
-- `NEXT_PUBLIC_BACKEND_URL`: Backend API URL (default: http://localhost:5000)
+- State is managed with React hooks inside Next.js pages/components.
+- Times are normalized to `HH:MM` for inputs; backend expects ISO date strings.
+- When editing, the frontend fetches the authoritative record from the backend to avoid client-side mismatch.
 
-## Styling
+## Building for Production
 
-The application uses CSS Modules for component-scoped styling with a clean, modern design featuring:
+```bash
+npm run build
+npm start
+```
 
-- Responsive grid layouts
-- Color-coded badges for class types and mediums
-- Smooth animations and transitions
-- Mobile-first approach
-- Consistent typography and spacing
+## Deployment
 
-## Browser Support
+- Set `NEXT_PUBLIC_BACKEND_URL` to the production API endpoint.
+- Deploy to Vercel, Netlify, or any Node-capable host. Ensure environment variables are configured in the provider.
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
+## Troubleshooting
+
+- If the app shows CORS or network errors, ensure the backend is reachable and the URL in `.env.local` is correct.
+- If token-based requests fail, check browser localStorage for a valid `token` value.
 
 ## Contributing
 
-1. Follow the existing code style
-2. Use TypeScript for type safety
-3. Test on multiple screen sizes
-4. Ensure accessibility compliance
+1. Follow existing TypeScript and CSS Module patterns
+2. Run `npm run lint` before committing
+3. Open PRs with clear descriptions and screenshots for UI changes
+
+---
+If you'd like, I can also add example Postman collections or OpenAPI spec for the backend next.
