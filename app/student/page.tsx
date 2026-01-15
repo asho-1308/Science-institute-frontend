@@ -22,6 +22,7 @@ interface StudentClass {
   teacher?: string;
   category?: string;
   type?: string;
+  medium?: string;
   startTime: string; // ISO or formatted
   endTime: string;
   location?: string;
@@ -186,6 +187,12 @@ export default function StudentDashboard() {
                         <h3 className={styles.subjectName}>{classNum ? `Class ${classNum} — ${cleaned}` : cleaned}</h3>
                         <span className={`${styles.badge} ${getBadgeStyle(cls.type)}`}>
                           {cls.type}
+                        </span>
+                        <span className={`${styles.badge} ${
+                          cls.medium === 'English' ? styles.badgeEnglish :
+                          styles.badgeTamil
+                        }`}>
+                          {cls.medium}
                         </span>
                       </div>
 

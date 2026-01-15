@@ -1,40 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Timetable App — Frontend (Next.js)
 
-## Getting Started
+This Next.js application is the user-facing portion of the Timetable Management System. It provides an Admin panel for managing schedules and a Student dashboard to view personal timetables.
 
-First, run the development server:
+## Features
+
+- Admin Panel: create/edit/delete class sessions, detect time conflicts
+- Student Dashboard: view classes by day, filter personal sessions
+- Live preview on the home page for today's schedule
+- Class metadata includes type and medium (Tamil/English)
+- Responsive design and lightweight UI using CSS Modules
+
+## Tech Stack
+
+- Next.js (App Router)
+- TypeScript
+- CSS Modules
+- Lucide React icons
+
+## Prerequisites
+
+- Node.js 18+ (recommended)
+- Backend API running and reachable (see `backend/README.md`)
+
+## Setup & Run
+
+1. Install dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+2. Create `.env.local` in `frontend/` with the backend URL:
+
+```bash
+NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+```
+
+3. Start development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000` in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Important Pages
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/` — Home (live schedule preview)
+- `/student` — Student dashboard (week view)
+- `/admin-login` — Admin login
+- `/admin` — Admin panel (requires login)
 
-## Learn More
+## How to add a class (Admin)
 
-To learn more about Next.js, take a look at the following resources:
+1. Login to the Admin panel
+2. Click "Add Class"
+3. Fill in: Category (External/Personal), Class Type (Theory/Revision/Paper Class), Medium (English/Tamil), Grade, Day, Location, Start/End time
+4. Save — the backend validates time overlaps and returns errors if conflicts exist
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Frontend development notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- State is managed with React hooks inside Next.js pages/components.
+- Times are normalized to `HH:MM` for inputs; backend expects ISO date strings.
+- When editing, the frontend fetches the authoritative record from the backend to avoid client-side mismatch.
 
-## Deploy on Vercel
+## Building for Production
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run build
+npm start
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
 
+- Set `NEXT_PUBLIC_BACKEND_URL` to the production API endpoint.
+- Deploy to Vercel, Netlify, or any Node-capable host. Ensure environment variables are configured in the provider.
 
-new
-jhg
+## Troubleshooting
+
+- If the app shows CORS or network errors, ensure the backend is reachable and the URL in `.env.local` is correct.
+- If token-based requests fail, check browser localStorage for a valid `token` value.
+
+## Contributing
+
+1. Follow existing TypeScript and CSS Module patterns
+2. Run `npm run lint` before committing
+3. Open PRs with clear descriptions and screenshots for UI changes
+
+---
+If you'd like, I can also add example Postman collections or OpenAPI spec for the backend next.
