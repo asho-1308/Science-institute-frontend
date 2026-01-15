@@ -465,6 +465,13 @@ export default function AdminPanel() {
                              <User size={10} style={{marginRight:3}}/> Personal
                            </span>
                         )}
+                        <span className={`${styles.badge} ${
+                          cls.type === 'Theory' ? styles.badgeTheory :
+                          cls.type === 'Revision' ? styles.badgeRevision :
+                          styles.badgePaper
+                        }`}>
+                          {cls.type}
+                        </span>
                       </div>
                       <div className={styles.locationRow}>
                         <MapPin size={14} className={styles.icon} /> {cls.location}
