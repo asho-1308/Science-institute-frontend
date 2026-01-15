@@ -26,7 +26,7 @@ export default function Home() {
 
   // Fetch today's PERSONAL classes for the Live Preview
   const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-  const [todayClasses, setTodayClasses] = useState<Array<{ id?: string; time: string; subject?: string; location?: string; type?: string; isEvening?: boolean }>>([]);
+  const [todayClasses, setTodayClasses] = useState<Array<{ id?: string; time: string; subject?: string; location?: string; type?: string; medium?: string; isEvening?: boolean }>>([]);
 
   useEffect(() => {
     const fetchToday = async () => {
@@ -45,6 +45,7 @@ export default function Home() {
             subject: d.title || d.subject,
             location: d.location,
             type: d.type,
+            medium: d.medium,
             isEvening: hour >= 18 && hour < 23,
           };
         });
@@ -183,6 +184,11 @@ export default function Home() {
                         cls.type === 'Theory' ? styles.typeTheory : styles.typeOther
                       }`}>
                         {cls.type}
+                      </span>
+                      <span className={`${styles.mediumTag} ${
+                        cls.medium === 'English' ? styles.mediumEnglish : styles.mediumTamil
+                      }`}>
+                        {cls.medium}
                       </span>
                     </div>
                   </div>

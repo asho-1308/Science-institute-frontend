@@ -195,6 +195,8 @@
 .badgeTheory { background-color: #ecfdf5; color: #047857; }
 .badgeRevision { background-color: #fffbeb; color: #b45309; }
 .badgePaper { background-color: #fef2f2; color: #b91c1c; }
+.badgeEnglish { background-color: #dbeafe; color: #1e40af; }
+.badgeTamil { background-color: #fef3c7; color: #92400e; }
 
 .locationRow {
   display: flex;

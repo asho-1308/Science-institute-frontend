@@ -19,6 +19,7 @@ import styles from "./admin.module.css";
 // --- Types ---
 type Category = "PERSONAL" | "EXTERNAL";
 type ClassType = "Theory" | "Revision" | "Paper Class";
+type Medium = "Tamil" | "English";
 
 interface ClassSession {
   _id?: string;
@@ -31,6 +32,7 @@ interface ClassSession {
   location: string;
   category: Category;
   type: ClassType;
+  medium?: Medium;
   classNumber?: number;
 }
 
@@ -40,6 +42,7 @@ interface FormState {
   subject: string;
   category: Category;
   classType: ClassType;
+  medium: Medium;
   location: string;
   startTime: string;
   endTime: string;
@@ -126,6 +129,7 @@ export default function AdminPanel() {
     subject: "Science",
     category: "EXTERNAL",
     classType: "Theory",
+    medium: "English",
     location: EXTERNAL_INSTITUTES[0],
     startTime: "",
     endTime: ""
@@ -228,6 +232,7 @@ export default function AdminPanel() {
         endTime: endTime.toISOString(),
         category: formData.category,
         type: formData.classType,
+        medium: formData.medium,
       };
       if (!isNaN(parsedClassNumber)) payload.classNumber = parsedClassNumber;
 
@@ -356,6 +361,7 @@ export default function AdminPanel() {
         subject: data.subject || (data.title ? data.title.replace(/\s*-\s*Grade\s*\d+/i, '').trim() : 'Science'),
         category: data.category || 'EXTERNAL',
         classType: data.type || 'Theory',
+        medium: data.medium || 'English',
         location: data.location || EXTERNAL_INSTITUTES[0],
         startTime: normalizeTimeForInput(data.startTime),
         endTime: normalizeTimeForInput(data.endTime),
@@ -472,6 +478,12 @@ export default function AdminPanel() {
                         }`}>
                           {cls.type}
                         </span>
+                        <span className={`${styles.badge} ${
+                          cls.medium === 'English' ? styles.badgeEnglish :
+                          styles.badgeTamil
+                        }`}>
+                          {cls.medium}
+                        </span>
                       </div>
                       <div className={styles.locationRow}>
                         <MapPin size={14} className={styles.icon} /> {cls.location}
@@ -534,6 +546,14 @@ export default function AdminPanel() {
                   <option value="Theory">Theory</option>
                   <option value="Revision">Revision</option>
                   <option value="Paper Class">Paper Class</option>
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Medium</label>
+                <select name="medium" className={styles.select} value={formData.medium} onChange={handleChange}>
+                  <option value="English">English</option>
+                  <option value="Tamil">Tamil</option>
                 </select>
               </div>
 
