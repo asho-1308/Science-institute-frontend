@@ -9,25 +9,30 @@ import {
   UserCog, 
   ArrowRight, 
   MapPin, 
-  BookOpen 
+  BookOpen,
+  Bell,
+  Megaphone,
+  AlertCircle,
+  ChevronRight
 } from "lucide-react";
 import { BACKEND_URL } from "../config";
 import styles from "./home.module.css";
 
 export default function Home() {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [todayClasses, setTodayClasses] = useState<Array<any>>([]);
+  const [notices, setNotices] = useState<Array<any>>([]);
 
-  // Simple clock effect (Initialized to null to avoid hydration mismatch)
+  // Clock
   useEffect(() => {
     setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch today's PERSONAL classes for the Live Preview
+  // Fetch Logic (Kept same as your original)
   const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-  const [todayClasses, setTodayClasses] = useState<Array<{ id?: string; time: string; subject?: string; location?: string; type?: string; medium?: string; isEvening?: boolean }>>([]);
-
+  
   useEffect(() => {
     const fetchToday = async () => {
       try {
@@ -50,15 +55,25 @@ export default function Home() {
           };
         });
         setTodayClasses(mapped);
-      } catch (e) {
-        // ignore preview errors
-      }
+      } catch (e) { console.error(e); }
     };
     fetchToday();
   }, [todayName]);
 
-  // Deterministic color palette + helper per class (share same algorithm as admin)
-  const COLORS = ['#EF4444','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EC4899','#06B6D4','#F97316'];
+  useEffect(() => {
+    const fetchNotices = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/notices`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setNotices(data);
+      } catch (e) { console.error(e); }
+    };
+    fetchNotices();
+  }, []);
+
+  // Helpers
+  const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'];
   const hashString = (s: string) => { let h = 5381; for (let i=0;i<s.length;i++) h=(h*33) ^ s.charCodeAt(i); return (h>>>0).toString(16); };
   const getColorForKey = (key?: string) => { const k = key||''; if(!k) return COLORS[0]; const hash = parseInt(hashString(k).slice(-8),16); return COLORS[hash % COLORS.length]; };
 
@@ -67,143 +82,174 @@ export default function Home() {
       
       {/* --- Navbar --- */}
       <nav className={styles.navbar}>
-        <div className={styles.brand}>
-          <div className={styles.logoIcon}>
-            <Atom size={24} />
+        <div className={styles.navbarContent}>
+          <div className={styles.brand}>
+            <div className={styles.logoBox}>
+              <Atom size={22} className="text-white" />
+            </div>
+            <span className={styles.brandText}>
+              Thomsan <span className={styles.brandHighlight}>Institute</span>
+            </span>
           </div>
-          <span className={styles.brandName}>
-            Thomsan <span className={styles.brandHighlight}>Institute</span>
-          </span>
-        </div>
-        
-        <div className={styles.navInfo}>
-          {currentTime && (
-            <>
-              <div className={styles.clockBadge}>
-                <Clock size={16} className={styles.clockIcon} />
-                <span>
-                  {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          
+          <div className={styles.navMeta}>
+            {currentTime && (
+              <div className={styles.timeBadge}>
+                <Clock size={14} />
+                <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span className={styles.dateDivider}>•</span>
+                <span className={styles.dateText}>
+                  {currentTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
                 </span>
               </div>
-              <span>|</span>
-              <span>{currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}</span>
-            </>
-          )}
+            )}
+          </div>
         </div>
       </nav>
 
       {/* --- Main Content --- */}
-      <main className={styles.mainContent}>
+      <main className={styles.main}>
         
-        {/* Left Column: Welcome & Action */}
-        <div className={styles.leftColumn}>
-          <div>
-            <div className={styles.statusBadge}>
-              <span className={styles.pulseDot}></span>
-              System Online
-            </div>
-            <h1 className={styles.heroTitle}>
-              Master Your <br />
-              <span className={styles.gradientText}>
-                Study Timeline
-              </span>
-            </h1>
-            <p className={styles.heroDescription}>
-              Access class schedules, exam dates, and location details in real-time. Designed for accuracy, optimized for success.
-            </p>
-          </div>
+        {/* Section 1: Hero & Live Schedule */}
+        <section className={styles.heroSection}>
+          <div className={styles.heroGrid}>
+            
+            {/* Left: Welcome */}
+            <div className={styles.heroContent}>
+              <div className={styles.systemStatus}>
+                <span className={styles.statusDot}></span>
+                <span>System Operational</span>
+              </div>
+              
+              <h1 className={styles.title}>
+                Academic <br />
+                <span className={styles.titleGradient}>Intelligence Hub</span>
+              </h1>
+              
+              <p className={styles.subtitle}>
+                Seamlessly integrated scheduling for students and faculty. 
+                Access real-time class data, locations, and institutional updates.
+              </p>
 
-          {/* Role Based Buttons */}
-          <div className={styles.buttonGroup}>
-            <Link href="/student" className={styles.studentBtn}>
-              <BookOpen size={20} />
-              <span>I'm a Student</span>
-              <ArrowRight size={18} className={styles.arrowIcon} />
-            </Link>
+              <div className={styles.actionButtons}>
+                <Link href="/student" className={styles.primaryBtn}>
+                  <BookOpen size={18} />
+                  <span>Student Portal</span>
+                  <ArrowRight size={16} className={styles.btnArrow} />
+                </Link>
 
-            <Link href="/admin/login" className={styles.teacherBtn}>
-              <UserCog size={20} className={styles.clockIcon} />
-              <span>Teacher Login</span>
-            </Link>
-          </div>
-          
-          {/* Quick Stat for Admin (Constraint Reminder) */}
-          {/* <div className={styles.warningCard}>
-             <div className={styles.warningIconWrapper}>
-               <MapPin size={18} />
-             </div>
-             <div>
-               <h4 className={styles.warningTitle}>Evening Location Rule</h4>
-               <p className={styles.warningText}>
-                 Reminder: Evening classes (6pm - 11pm) must be held at a single location per day (Place A or Place B).
-               </p>
-             </div>
-          </div> */}
-        </div>
-
-        {/* Right Column: Dynamic Schedule Preview Card */}
-        <div className={styles.rightColumn}>
-          {/* Decorative background blobs */}
-          <div className={`${styles.blob} ${styles.blobPurple}`}></div>
-          <div className={`${styles.blob} ${styles.blobIndigo}`}></div>
-
-          <div className={styles.scheduleCard}>
-            <div className={styles.cardHeader}>
-              <h3 className={styles.cardTitle}>
-                <Calendar className={styles.clockIcon} size={20} />
-                Today's Schedule
-              </h3>
-              <span className={styles.liveBadge}>
-                Live Preview
-              </span>
+                <Link href="/admin/login" className={styles.secondaryBtn}>
+                  <UserCog size={18} />
+                  <span>Faculty Login</span>
+                </Link>
+              </div>
             </div>
 
-            {/* Timeline List */}
-            <div className={styles.timelineContainer}>
-              {todayClasses.map((cls, index) => (
-                <div key={cls.id} className={styles.timelineItem}>
-                  <div className={styles.timeCol}>
-                    <span className={styles.time}>{cls.time.split(' ')[0]}</span>
-                    <span className={styles.ampm}>{cls.time.split(' ')[1]}</span>
-                    {/* Vertical Line */}
-                    {index !== todayClasses.length - 1 && (
-                      <div className={styles.verticalLine}></div>
-                    )}
+            {/* Right: Glass Card Schedule */}
+            <div className={styles.scheduleWrapper}>
+              <div className={styles.glassCard}>
+                <div className={styles.glassHeader}>
+                  <div className={styles.headerTitle}>
+                    <Calendar size={18} className="text-indigo-600" />
+                    <h3>Today's Timeline</h3>
+                  </div>
+                  <div className={styles.liveIndicator}>
+                    <span className={styles.blink}></span> Live
+                  </div>
+                </div>
+
+                <div className={styles.timelineList}>
+                  {todayClasses.length === 0 ? (
+                    <div className={styles.emptyState}>
+                      <Clock size={32} />
+                      <p>No classes scheduled for today.</p>
+                    </div>
+                  ) : (
+                    todayClasses.slice(0, 4).map((cls, i) => (
+                      <div key={i} className={styles.timelineItem}>
+                        <div className={styles.timeBox}>
+                          <span className={styles.timeH}>{cls.time.split(' ')[0]}</span>
+                          <span className={styles.timeM}>{cls.time.split(' ')[1]}</span>
+                        </div>
+                        <div className={styles.classDetails}>
+                          <div className={styles.subjectRow}>
+                            <span 
+                              className={styles.colorDot} 
+                              style={{ backgroundColor: getColorForKey(cls.subject) }}
+                            />
+                            <h4 className={styles.subjectName}>{cls.subject}</h4>
+                          </div>
+                          <div className={styles.metaRow}>
+                            <span className={styles.metaTag}>
+                              <MapPin size={10} /> {cls.location || 'N/A'}
+                            </span>
+                            <span className={`${styles.metaTag} ${cls.type === 'Theory' ? styles.tagTheory : styles.tagRevision}`}>
+                              {cls.type || 'Class'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                
+                <Link href="/student" className={styles.cardFooterLink}>
+                  View Full Schedule <ChevronRight size={14} />
+                </Link>
+              </div>
+              
+              {/* Background Blobs */}
+              <div className={styles.blob1}></div>
+              <div className={styles.blob2}></div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2: Professional Notice Board */}
+        {notices.length > 0 && (
+          <section className={styles.noticeSection}>
+            <div className={styles.sectionHeader}>
+              <div className={styles.headerIconBox}>
+                <Bell size={20} />
+              </div>
+              <div>
+                <h2 className={styles.sectionTitle}>Notice Board</h2>
+                <p className={styles.sectionDesc}>Latest updates and administrative announcements</p>
+              </div>
+            </div>
+
+            <div className={styles.noticeGrid}>
+              {notices.map((notice) => (
+                <div 
+                  key={notice._id} 
+                  className={`${styles.noticeCard} ${notice.type === 'leave' ? styles.noticeCritical : styles.noticeInfo}`}
+                >
+                  <div className={styles.noticeHeader}>
+                    <span className={styles.noticeBadge}>
+                      {notice.type === 'leave' ? <AlertCircle size={14} /> : <Megaphone size={14} />}
+                      {notice.type === 'leave' ? 'Urgent Update' : 'Announcement'}
+                    </span>
+                    <span className={styles.noticeDate}>
+                      {new Date(notice.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
                   </div>
                   
-                  <div className={styles.infoCol}>
-                    <h4 className={styles.subjectTitle}>
-                      <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 4, backgroundColor: getColorForKey(cls.id || cls.subject), marginRight: 8 }}></span>
-                      {cls.subject}
-                    </h4>
-                    <div className={styles.metaInfo}>
-                      <span className={styles.locationTag}>
-                        <MapPin size={12} /> {cls.location}
-                      </span>
-                      <span className={`${styles.typeTag} ${
-                        cls.type === 'Theory' ? styles.typeTheory : styles.typeOther
-                      }`}>
-                        {cls.type}
-                      </span>
-                      <span className={`${styles.mediumTag} ${
-                        cls.medium === 'English' ? styles.mediumEnglish : styles.mediumTamil
-                      }`}>
-                        {cls.medium}
-                      </span>
+                  <h3 className={styles.noticeTitle}>{notice.title}</h3>
+                  <p className={styles.noticeBody}>{notice.content}</p>
+                  
+                  <div className={styles.noticeFooter}>
+                    <div className={styles.authorInfo}>
+                      <div className={styles.authorAvatar}>
+                        {notice.createdBy?.username?.charAt(0) || 'A'}
+                      </div>
+                      <span>{notice.createdBy?.username || 'Admin'}</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-
-            {/* View Full Button */}
-            <div className="mt-6 text-center">
-              <Link href="/student" className={styles.viewFullLink}>
-                View Full Week Schedule &rarr;
-              </Link>
-            </div>
-          </div>
-        </div>
+          </section>
+        )}
 
       </main>
     </div>

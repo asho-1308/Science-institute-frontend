@@ -11,7 +11,8 @@ import {
   User, 
   ArrowLeft,
   X,
-  AlertTriangle
+  AlertTriangle,
+  Bell
 } from "lucide-react";
 import { BACKEND_URL } from "../../config";
 import styles from "./admin.module.css";
@@ -20,6 +21,7 @@ import styles from "./admin.module.css";
 type Category = "PERSONAL" | "EXTERNAL";
 type ClassType = "Theory" | "Revision" | "Paper Class";
 type Medium = "Tamil" | "English";
+type NoticeType = "leave" | "announcement";
 
 interface ClassSession {
   _id?: string;
@@ -36,6 +38,15 @@ interface ClassSession {
   classNumber?: number;
 }
 
+interface Notice {
+  _id: string;
+  title: string;
+  content: string;
+  date: string;
+  type: NoticeType;
+  createdBy: { username: string };
+}
+
 interface FormState {
   day: string;
   grade: string;
@@ -48,6 +59,13 @@ interface FormState {
   endTime: string;
 }
 
+interface NoticeFormState {
+  title: string;
+  content: string;
+  date: string;
+  type: NoticeType;
+}
+
 // --- Configuration Constants ---
 const EXTERNAL_INSTITUTES = ["Excellent Institute", "Viyabarimoolai Institute"];
 const PERSONAL_LOCATIONS = ["Thumbasiddy", "Puttalai"];
@@ -56,10 +74,21 @@ const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", 
 
 export default function AdminPanel() {
   const [classes, setClasses] = useState<ClassSession[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'classes' | 'notices'>('classes');
+
+  const [noticeFormData, setNoticeFormData] = useState<NoticeFormState>({
+    title: '',
+    content: '',
+    date: new Date().toISOString().split('T')[0],
+    type: 'announcement'
+  });
 
   // Color palette and helper to assign a deterministic color per class
   const COLORS = [
@@ -121,6 +150,21 @@ export default function AdminPanel() {
     };
     fetchClasses();
   }, []);
+
+  // --- Fetch notices ---
+  React.useEffect(() => {
+    const fetchNotices = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/notices`);
+        if (!res.ok) throw new Error('Failed to fetch notices.');
+        const data: Notice[] = await res.json();
+        setNotices(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    };
+    if (activeTab === 'notices') fetchNotices();
+  }, [activeTab]);
 
   // Form State
   const [formData, setFormData] = useState<FormState>({
@@ -313,6 +357,84 @@ export default function AdminPanel() {
     }
   };
 
+  // --- Notice handlers ---
+  const handleNoticeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNoticeFormData(prev => ({ ...prev, [name as keyof NoticeFormState]: value } as NoticeFormState));
+  };
+
+  const handleNoticeSave = async () => {
+    setError("");
+    if (!noticeFormData.title.trim() || !noticeFormData.content.trim()) {
+      setError("Title and content are required.");
+      return;
+    }
+
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const payload = {
+        title: noticeFormData.title.trim(),
+        content: noticeFormData.content.trim(),
+        date: noticeFormData.date || new Date().toISOString(),
+        type: noticeFormData.type
+      };
+
+      const url = editingNoticeId ? `${BACKEND_URL}/api/notices/${editingNoticeId}` : `${BACKEND_URL}/api/notices`;
+      const method = editingNoticeId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, { method, headers, body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error('Failed to save notice');
+
+      const savedNotice = await res.json();
+
+      if (editingNoticeId) {
+        setNotices(notices.map(n => n._id === editingNoticeId ? savedNotice : n));
+      } else {
+        setNotices([...notices, savedNotice]);
+      }
+
+      setIsNoticeModalOpen(false);
+      setEditingNoticeId(null);
+      setNoticeFormData({
+        title: '',
+        content: '',
+        date: new Date().toISOString().split('T')[0],
+        type: 'announcement'
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const handleNoticeDelete = async (id: string) => {
+    if (!confirm("Delete this notice?")) return;
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const res = await fetch(`${BACKEND_URL}/api/notices/${id}`, { method: 'DELETE', headers });
+      if (!res.ok) throw new Error('Failed to delete notice');
+      setNotices(notices.filter(n => n._id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const handleNoticeEdit = (notice: Notice) => {
+    setEditingNoticeId(notice._id);
+    setNoticeFormData({
+      title: notice.title,
+      content: notice.content,
+      date: new Date(notice.date).toISOString().split('T')[0],
+      type: notice.type
+    });
+    setIsNoticeModalOpen(true);
+  };
+
   // Normalize times to `HH:MM` for `input[type=time]` when editing
   const normalizeTimeForInput = (time?: string) => {
     if (!time) return "";
@@ -387,11 +509,11 @@ export default function AdminPanel() {
       document.body.style.paddingRight = '';
     };
 
-    if (isModalOpen) applyLock();
+    if (isModalOpen || isNoticeModalOpen) applyLock();
     else removeLock();
 
     return () => removeLock();
-  }, [isModalOpen]);
+  }, [isModalOpen, isNoticeModalOpen]);
 
   return (
     <div className={styles.container}>
@@ -405,112 +527,173 @@ export default function AdminPanel() {
             </Link>
             <div className={styles.brand}>Admin</div>
         </div>
-        <button className={styles.addButton} onClick={() => setIsModalOpen(true)}>
-          <Plus size={20} /> <span className={styles.btnText}>Add Class</span>
+        <div className={styles.navTabs}>
+          <button 
+            className={`${styles.tabButton} ${activeTab === 'classes' ? styles.activeTab : ''}`} 
+            onClick={() => setActiveTab('classes')}
+          >
+            Classes
+          </button>
+          <button 
+            className={`${styles.tabButton} ${activeTab === 'notices' ? styles.activeTab : ''}`} 
+            onClick={() => setActiveTab('notices')}
+          >
+            <Bell size={16} /> Notices
+          </button>
+        </div>
+        <button 
+          className={styles.addButton} 
+          onClick={() => activeTab === 'classes' ? setIsModalOpen(true) : setIsNoticeModalOpen(true)}
+        >
+          <Plus size={20} /> <span className={styles.btnText}>
+            Add {activeTab === 'classes' ? 'Class' : 'Notice'}
+          </span>
         </button>
       </nav>
 
       {/* Main Content */}
       <main className={styles.main}>
-        <div className={styles.tipBox}>
-          <strong>Tip:</strong> Add your <b>External Institute</b> classes first.
-        </div>
-
-        {loading && <p className={styles.loading}>Loading schedule...</p>}
-        {!loading && error && <div className={styles.errorMsg}>{error}</div>}
-
-        {!loading && !error && DAYS.map(day => {
-          const dayClasses = classes.filter(c => c.day === day);
-          if (dayClasses.length === 0) return null;
-
-          return (
-            <div key={day} className={styles.dayGroup}>
-              <div className={styles.dayHeader}>{day}</div>
-              <ul className={styles.classList}>
-                {dayClasses.map((cls, idx) => {
-                  const classNum = cls.classNumber;
-                  const locClass = cls.location?.includes('Viyabarimoolai') ? 'locViyabarimoolaiInstitute' 
-                    : cls.location?.includes('Puttalai') ? 'locPuttalai' 
-                    : cls.location?.includes('Thumbasiddy') ? 'locThumbasiddy'
-                    : 'locExcellentInstitute';
-                  
-                  return (
-                  <li
-                    key={cls._id}
-                    className={`${styles.classItem} ${styles[locClass]}`}
-                    style={{ borderLeft: `4px solid ${getColorForKey(cls._id || cls.title || (cls.subject || ''))}` }}
-                  >
-                    
-                    <div className={styles.itemHeader}>
-                        <div className={styles.timeBox}>
-                            <span className={styles.timeText}>{cls.startTime}</span>
-                            <span className={styles.durationText}>- {cls.endTime}</span>
-                        </div>
-                        {/* Mobile Actions (Top Right) */}
-                        <div className={`${styles.actionGroup} ${styles.mobileActions}`}>
-                            <button className={`${styles.actionBtn} ${styles.btnEdit}`} onClick={() => handleEdit(cls)}>
-                                <Edit2 size={16} />
-                            </button>
-                            <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleDelete(cls._id)}>
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className={styles.infoBox}>
-                      <div className={styles.subjectRow}>
-                        <span className={styles.subjectTitle}>
-                          {classNum ? `Class ${classNum}` : (cls.grade || '')}
-                        </span>
-                        {cls.category === 'EXTERNAL' ? (
-                           <span className={`${styles.badge} ${styles.badgeExternal}`}>
-                             <Lock size={10} style={{marginRight:3}}/> Fixed
-                           </span>
-                        ) : (
-                           <span className={`${styles.badge} ${styles.badgePersonal}`}>
-                             <User size={10} style={{marginRight:3}}/> Personal
-                           </span>
-                        )}
-                        <span className={`${styles.badge} ${
-                          cls.type === 'Theory' ? styles.badgeTheory :
-                          cls.type === 'Revision' ? styles.badgeRevision :
-                          styles.badgePaper
-                        }`}>
-                          {cls.type}
-                        </span>
-                        <span className={`${styles.badge} ${
-                          cls.medium === 'English' ? styles.badgeEnglish :
-                          styles.badgeTamil
-                        }`}>
-                          {cls.medium}
-                        </span>
-                      </div>
-                      <div className={styles.locationRow}>
-                        <MapPin size={14} className={styles.icon} /> {cls.location}
-                      </div>
-                    </div>
-
-                    {/* Desktop Actions (Right Side) */}
-                    <div className={`${styles.actionGroup} ${styles.desktopActions}`}>
-                      <button className={`${styles.actionBtn} ${styles.btnEdit}`} onClick={() => handleEdit(cls)}>
-                        <Edit2 size={16} />
-                      </button>
-                      <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleDelete(cls._id)}>
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </li>
-                  );
-                })}
-              </ul>
+        {activeTab === 'classes' && (
+          <>
+            <div className={styles.tipBox}>
+              <strong>Tip:</strong> Add your <b>External Institute</b> classes first.
             </div>
-          );
-        })}
 
-        {!loading && !error && classes.length === 0 && (
-          <div className={styles.emptyState}>
-            <p>No classes yet. Start by adding your Fixed External Classes.</p>
-          </div>
+            {loading && <p className={styles.loading}>Loading schedule...</p>}
+            {!loading && error && <div className={styles.errorMsg}>{error}</div>}
+
+            {!loading && !error && DAYS.map(day => {
+              const dayClasses = classes.filter(c => c.day === day);
+              if (dayClasses.length === 0) return null;
+
+              return (
+                <div key={day} className={styles.dayGroup}>
+                  <div className={styles.dayHeader}>{day}</div>
+                  <ul className={styles.classList}>
+                    {dayClasses.map((cls, idx) => {
+                      const classNum = cls.classNumber;
+                      const locClass = cls.location?.includes('Viyabarimoolai') ? 'locViyabarimoolaiInstitute' 
+                        : cls.location?.includes('Puttalai') ? 'locPuttalai' 
+                        : cls.location?.includes('Thumbasiddy') ? 'locThumbasiddy'
+                        : 'locExcellentInstitute';
+                      
+                      return (
+                      <li
+                        key={cls._id}
+                        className={`${styles.classItem} ${styles[locClass]}`}
+                        style={{ borderLeft: `4px solid ${getColorForKey(cls._id || cls.title || (cls.subject || ''))}` }}
+                      >
+                        
+                        <div className={styles.itemHeader}>
+                            <div className={styles.timeBox}>
+                                <span className={styles.timeText}>{cls.startTime}</span>
+                                <span className={styles.durationText}>- {cls.endTime}</span>
+                            </div>
+                            {/* Mobile Actions (Top Right) */}
+                            <div className={`${styles.actionGroup} ${styles.mobileActions}`}>
+                                <button className={`${styles.actionBtn} ${styles.btnEdit}`} onClick={() => handleEdit(cls)}>
+                                    <Edit2 size={16} />
+                                </button>
+                                <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleDelete(cls._id)}>
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className={styles.infoBox}>
+                          <div className={styles.subjectRow}>
+                            <span className={styles.subjectTitle}>
+                              {classNum ? `Class ${classNum}` : (cls.grade || '')}
+                            </span>
+                            {cls.category === 'EXTERNAL' ? (
+                               <span className={`${styles.badge} ${styles.badgeExternal}`}>
+                                 <Lock size={10} style={{marginRight:3}}/> Fixed
+                               </span>
+                            ) : (
+                               <span className={`${styles.badge} ${styles.badgePersonal}`}>
+                                 <User size={10} style={{marginRight:3}}/> Personal
+                               </span>
+                            )}
+                            <span className={`${styles.badge} ${
+                              cls.type === 'Theory' ? styles.badgeTheory :
+                              cls.type === 'Revision' ? styles.badgeRevision :
+                              styles.badgePaper
+                            }`}>
+                              {cls.type}
+                            </span>
+                            <span className={`${styles.badge} ${
+                              cls.medium === 'English' ? styles.badgeEnglish :
+                              styles.badgeTamil
+                            }`}>
+                              {cls.medium}
+                            </span>
+                          </div>
+                          <div className={styles.locationRow}>
+                            <MapPin size={14} className={styles.icon} /> {cls.location}
+                          </div>
+                        </div>
+
+                        {/* Desktop Actions (Right Side) */}
+                        <div className={`${styles.actionGroup} ${styles.desktopActions}`}>
+                          <button className={`${styles.actionBtn} ${styles.btnEdit}`} onClick={() => handleEdit(cls)}>
+                            <Edit2 size={16} />
+                          </button>
+                          <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleDelete(cls._id)}>
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+
+            {!loading && !error && classes.length === 0 && (
+              <div className={styles.emptyState}>
+                <p>No classes yet. Start by adding your Fixed External Classes.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'notices' && (
+          <>
+            {error && <div className={styles.errorMsg}>{error}</div>}
+
+            <div className={styles.noticesList}>
+              {notices.map((notice) => (
+                <div key={notice._id} className={`${styles.noticeItem} ${notice.type === 'leave' ? styles.noticeLeave : styles.noticeAnnouncement}`}>
+                  <div className={styles.noticeHeader}>
+                    <h3 className={styles.noticeTitle}>{notice.title}</h3>
+                    <span className={`${styles.noticeType} ${notice.type === 'leave' ? styles.typeLeave : styles.typeAnnouncement}`}>
+                      {notice.type === 'leave' ? 'Teacher Leave' : 'Announcement'}
+                    </span>
+                  </div>
+                  <p className={styles.noticeContent}>{notice.content}</p>
+                  <div className={styles.noticeMeta}>
+                    <span>{new Date(notice.date).toLocaleDateString()}</span>
+                    <span>by {notice.createdBy.username}</span>
+                  </div>
+                  <div className={styles.noticeActions}>
+                    <button className={`${styles.actionBtn} ${styles.btnEdit}`} onClick={() => handleNoticeEdit(notice)}>
+                      <Edit2 size={16} />
+                    </button>
+                    <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleNoticeDelete(notice._id)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {notices.length === 0 && (
+              <div className={styles.emptyState}>
+                <p>No notices yet. Add your first notice.</p>
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -597,6 +780,70 @@ export default function AdminPanel() {
             <div className={styles.modalFooter}>
               <button className={styles.btnCancel} onClick={() => setIsModalOpen(false)}>Cancel</button>
               <button className={styles.btnSave} onClick={handleSave}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- NOTICE MODAL --- */}
+      {isNoticeModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>{editingNoticeId ? "Edit Notice" : "Add Notice"}</h2>
+              <button className={styles.closeBtn} onClick={() => setIsNoticeModalOpen(false)}><X size={20}/></button>
+            </div>
+
+            <div className={styles.modalBody}>
+              {error && <div className={styles.errorMsg}><AlertTriangle size={18} /> {error}</div>}
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Title</label>
+                <input
+                  type="text"
+                  name="title"
+                  className={styles.input}
+                  value={noticeFormData.title}
+                  onChange={handleNoticeChange}
+                  placeholder="Enter notice title"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Type</label>
+                <select name="type" className={styles.select} value={noticeFormData.type} onChange={handleNoticeChange}>
+                  <option value="announcement">Announcement</option>
+                  <option value="leave">Teacher Leave</option>
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  className={styles.input}
+                  value={noticeFormData.date}
+                  onChange={handleNoticeChange}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Content</label>
+                <textarea
+                  name="content"
+                  className={styles.textarea}
+                  value={noticeFormData.content}
+                  onChange={handleNoticeChange}
+                  placeholder="Enter notice content"
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button className={styles.btnCancel} onClick={() => setIsNoticeModalOpen(false)}>Cancel</button>
+              <button className={styles.btnSave} onClick={handleNoticeSave}>Save</button>
             </div>
           </div>
         </div>

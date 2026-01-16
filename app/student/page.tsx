@@ -43,12 +43,17 @@ export default function StudentDashboard() {
     const fetchClasses = async () => {
       setLoading(true);
       console.log('Fetching classes for student dashboard...');
+      console.log('BACKEND_URL:', BACKEND_URL);
       try {
         const params = new URLSearchParams({ category: 'PERSONAL', day: selectedDay });
         console.log('Fetch URL:', `${BACKEND_URL}/timetable?${params.toString()}`);
         const res = await fetch(`${BACKEND_URL}/timetable?${params.toString()}`);
         console.log('Fetch response status:', res.status);
-        if (!res.ok) throw new Error('Failed to fetch schedule');
+        console.log('Fetch response ok:', res.ok);
+        if (!res.ok) {
+          console.log('Response not ok, throwing error');
+          throw new Error(`Failed to fetch schedule: ${res.status} ${res.statusText}`);
+        }
         const data: StudentClass[] = await res.json();
         console.log('Raw data received:', data);
         // format start/end times for display
