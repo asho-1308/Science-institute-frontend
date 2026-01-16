@@ -140,7 +140,7 @@ export default function Home() {
 
                 <Link href="/admin/login" className={styles.secondaryBtn}>
                   <UserCog size={18} />
-                  <span>Faculty Login</span>
+                  <span>Teacher Login</span>
                 </Link>
               </div>
             </div>
