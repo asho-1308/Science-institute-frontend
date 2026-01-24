@@ -64,6 +64,7 @@ interface NoticeFormState {
   content: string;
   date: string;
   type: NoticeType;
+  image: File | null;
 }
 
 // --- Configuration Constants ---
@@ -87,7 +88,8 @@ export default function AdminPanel() {
     title: '',
     content: '',
     date: new Date().toISOString().split('T')[0],
-    type: 'announcement'
+    type: 'announcement',
+    image: null
   });
 
   // Color palette and helper to assign a deterministic color per class
@@ -363,6 +365,11 @@ export default function AdminPanel() {
     setNoticeFormData(prev => ({ ...prev, [name as keyof NoticeFormState]: value } as NoticeFormState));
   };
 
+  const handleNoticeImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setNoticeFormData(prev => ({ ...prev, image: file }));
+  };
+
   const handleNoticeSave = async () => {
     setError("");
     if (!noticeFormData.title.trim() || !noticeFormData.content.trim()) {
@@ -372,20 +379,38 @@ export default function AdminPanel() {
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
-      const payload = {
-        title: noticeFormData.title.trim(),
-        content: noticeFormData.content.trim(),
-        date: noticeFormData.date || new Date().toISOString(),
-        type: noticeFormData.type
-      };
+      let body: string | FormData;
+      let contentType: string | undefined;
+
+      if (noticeFormData.image) {
+        // Use FormData for file uploads
+        const formData = new FormData();
+        formData.append('title', noticeFormData.title.trim());
+        formData.append('content', noticeFormData.content.trim());
+        formData.append('date', noticeFormData.date || new Date().toISOString());
+        formData.append('type', noticeFormData.type);
+        formData.append('image', noticeFormData.image);
+        body = formData;
+      } else {
+        // Use JSON for text-only updates
+        contentType = 'application/json';
+        body = JSON.stringify({
+          title: noticeFormData.title.trim(),
+          content: noticeFormData.content.trim(),
+          date: noticeFormData.date || new Date().toISOString(),
+          type: noticeFormData.type
+        });
+      }
+
+      if (contentType) headers['Content-Type'] = contentType;
 
       const url = editingNoticeId ? `${BACKEND_URL}/api/notices/${editingNoticeId}` : `${BACKEND_URL}/api/notices`;
       const method = editingNoticeId ? 'PUT' : 'POST';
 
-      const res = await fetch(url, { method, headers, body: JSON.stringify(payload) });
+      const res = await fetch(url, { method, headers, body });
       if (!res.ok) throw new Error('Failed to save notice');
 
       const savedNotice = await res.json();
@@ -402,10 +427,11 @@ export default function AdminPanel() {
         title: '',
         content: '',
         date: new Date().toISOString().split('T')[0],
-        type: 'announcement'
+        type: 'announcement',
+        image: null
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(err instanceof Error ? err.message : 'An error occurred');
     }
   };
 
@@ -430,7 +456,8 @@ export default function AdminPanel() {
       title: notice.title,
       content: notice.content,
       date: new Date(notice.date).toISOString().split('T')[0],
-      type: notice.type
+      type: notice.type,
+      image: null
     });
     setIsNoticeModalOpen(true);
   };
@@ -838,6 +865,21 @@ export default function AdminPanel() {
                   placeholder="Enter notice content"
                   rows={4}
                 />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Image (Optional)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className={styles.input}
+                  onChange={handleNoticeImageChange}
+                />
+                {noticeFormData.image && (
+                  <div style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>
+                    Selected: {noticeFormData.image.name}
+                  </div>
+                )}
               </div>
             </div>
 
