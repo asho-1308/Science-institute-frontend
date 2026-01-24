@@ -239,7 +239,7 @@ export default function Home() {
                   {notice.image && (
                     <div className={styles.noticeImage}>
                       <img 
-                        src={`${BACKEND_URL}${notice.image}`} 
+                        src={notice.image} 
                         alt={notice.title}
                         className={styles.noticeImg}
                       />
