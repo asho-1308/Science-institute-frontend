@@ -612,6 +612,51 @@
   .noticeGrid { grid-template-columns: 1fr; }
   .heroSection { padding: 2rem 0; }
   .scheduleWrapper { margin-top: 2rem; }
+
+  /* Mobile Notice Styles */
+  .noticeCard {
+    padding: 1.25rem;
+  }
+
+  .noticeImage {
+    margin-bottom: 1rem;
+  }
+
+  .noticeImg {
+    width: 100%;
+    height: 180px;
+  }
+
+  .noticeTitle {
+    font-size: 1.1rem;
+  }
+
+  .noticeBody {
+    font-size: 0.85rem;
+  }
+
+  /* Mobile Image Modal */
+  .imageModal {
+    padding: 1rem;
+  }
+
+  .modalContent {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+  }
+
+  .closeButton {
+    width: 36px;
+    height: 36px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .fullImage {
+    max-height: 80vh;
+    border-radius: 4px;
+  }
 }
 
 /* --- Image Modal --- */
