@@ -45,6 +45,7 @@ interface Notice {
   date: string;
   type: NoticeType;
   createdBy: { username: string };
+  image?: string;
 }
 
 interface FormState {
@@ -83,6 +84,7 @@ export default function AdminPanel() {
   const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'classes' | 'notices'>('classes');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const [noticeFormData, setNoticeFormData] = useState<NoticeFormState>({
     title: '',
@@ -698,6 +700,19 @@ export default function AdminPanel() {
                       {notice.type === 'leave' ? 'Teacher Leave' : 'Announcement'}
                     </span>
                   </div>
+                  
+                  {notice.image && (
+                    <div className={styles.noticeImage}>
+                      <img 
+                        src={notice.image} 
+                        alt={notice.title}
+                        className={styles.noticeImg}
+                        onClick={() => notice.image && setSelectedImage(notice.image)}
+                        style={{ cursor: notice.image ? 'pointer' : 'default' }}
+                      />
+                    </div>
+                  )}
+                  
                   <p className={styles.noticeContent}>{notice.content}</p>
                   <div className={styles.noticeMeta}>
                     <span>{new Date(notice.date).toLocaleDateString()}</span>
@@ -887,6 +902,25 @@ export default function AdminPanel() {
               <button className={styles.btnCancel} onClick={() => setIsNoticeModalOpen(false)}>Cancel</button>
               <button className={styles.btnSave} onClick={handleNoticeSave}>Save</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div className={styles.imageModal} onClick={() => setSelectedImage(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <button 
+              className={styles.closeButton} 
+              onClick={() => setSelectedImage(null)}
+            >
+              <X size={24} />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Full size" 
+              className={styles.fullImage}
+            />
           </div>
         </div>
       )}
