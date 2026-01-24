@@ -235,6 +235,17 @@ export default function Home() {
                   </div>
                   
                   <h3 className={styles.noticeTitle}>{notice.title}</h3>
+                  
+                  {notice.image && (
+                    <div className={styles.noticeImage}>
+                      <img 
+                        src={`${BACKEND_URL}${notice.image}`} 
+                        alt={notice.title}
+                        className={styles.noticeImg}
+                      />
+                    </div>
+                  )}
+                  
                   <p className={styles.noticeBody}>{notice.content}</p>
                   
                   <div className={styles.noticeFooter}>
