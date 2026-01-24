@@ -13,7 +13,8 @@ import {
   Bell,
   Megaphone,
   AlertCircle,
-  ChevronRight
+  ChevronRight,
+  X
 } from "lucide-react";
 import { BACKEND_URL } from "../config";
 import styles from "./home.module.css";
@@ -22,6 +23,7 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [todayClasses, setTodayClasses] = useState<Array<any>>([]);
   const [notices, setNotices] = useState<Array<any>>([]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Clock
   useEffect(() => {
@@ -242,6 +244,8 @@ export default function Home() {
                         src={notice.image} 
                         alt={notice.title}
                         className={styles.noticeImg}
+                        onClick={() => setSelectedImage(notice.image)}
+                        style={{ cursor: 'pointer' }}
                       />
                     </div>
                   )}
@@ -263,6 +267,25 @@ export default function Home() {
         )}
 
       </main>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div className={styles.imageModal} onClick={() => setSelectedImage(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <button 
+              className={styles.closeButton} 
+              onClick={() => setSelectedImage(null)}
+            >
+              <X size={24} />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Full size" 
+              className={styles.fullImage}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
