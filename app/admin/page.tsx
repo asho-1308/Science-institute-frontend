@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "../../config";
 import styles from "./admin.module.css";
+import CalendarView from "../components/CalendarView";
 
 // --- Types ---
 type Category = "PERSONAL" | "EXTERNAL";
@@ -85,6 +86,7 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'classes' | 'notices'>('classes');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [calendarMode, setCalendarMode] = useState(false);
 
   const [noticeFormData, setNoticeFormData] = useState<NoticeFormState>({
     title: '',
@@ -584,105 +586,121 @@ export default function AdminPanel() {
       <main className={styles.main}>
         {activeTab === 'classes' && (
           <>
-            <div className={styles.tipBox}>
-              <strong>Tip:</strong> Add your <b>External Institute</b> classes first.
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div className={styles.tipBox}>
+                  <strong>Tip:</strong> Add your <b>External Institute</b> classes first.
+                </div>
+              </div>
+              <div>
+                <button className={styles.toggleBtn || ''} onClick={() => setCalendarMode(prev => !prev)} style={{ padding: '6px 10px', borderRadius: 6 }}>
+                  {calendarMode ? 'List View' : 'Calendar View'}
+                </button>
+              </div>
             </div>
 
-            {loading && <p className={styles.loading}>Loading schedule...</p>}
-            {!loading && error && <div className={styles.errorMsg}>{error}</div>}
+            {calendarMode ? (
+              <CalendarView onEventClick={(id) => { const cls = classes.find(c => c._id === id); if (cls) handleEdit(cls); }} />
+            ) : (
+              <>
+                {loading && <p className={styles.loading}>Loading schedule...</p>}
+                {!loading && error && <div className={styles.errorMsg}>{error}</div>}
 
-            {!loading && !error && DAYS.map(day => {
-              const dayClasses = classes.filter(c => c.day === day);
-              if (dayClasses.length === 0) return null;
+                {!loading && !error && DAYS.map(day => {
+                  const dayClasses = classes.filter(c => c.day === day);
+                  if (dayClasses.length === 0) return null;
 
-              return (
-                <div key={day} className={styles.dayGroup}>
-                  <div className={styles.dayHeader}>{day}</div>
-                  <ul className={styles.classList}>
-                    {dayClasses.map((cls, idx) => {
-                      const classNum = cls.classNumber;
-                      const locClass = cls.location?.includes('Viyabarimoolai') ? 'locViyabarimoolaiInstitute' 
-                        : cls.location?.includes('Puttalai') ? 'locPuttalai' 
-                        : cls.location?.includes('Thumbasiddy') ? 'locThumbasiddy'
-                        : 'locExcellentInstitute';
-                      
-                      return (
-                      <li
-                        key={cls._id}
-                        className={`${styles.classItem} ${styles[locClass]}`}
-                        style={{ borderLeft: `4px solid ${getColorForKey(cls._id || cls.title || (cls.subject || ''))}` }}
-                      >
-                        
-                        <div className={styles.itemHeader}>
-                            <div className={styles.timeBox}>
-                                <span className={styles.timeText}>{cls.startTime}</span>
-                                <span className={styles.durationText}>- {cls.endTime}</span>
+                  return (
+                    <div key={day} className={styles.dayGroup}>
+                      <div className={styles.dayHeader}>{day}</div>
+                      <ul className={styles.classList}>
+                        {dayClasses.map((cls, idx) => {
+                          const classNum = cls.classNumber;
+                          const locClass = cls.location?.includes('Viyabarimoolai') ? 'locViyabarimoolaiInstitute' 
+                            : cls.location?.includes('Puttalai') ? 'locPuttalai' 
+                            : cls.location?.includes('Thumbasiddy') ? 'locThumbasiddy'
+                            : 'locExcellentInstitute';
+                          
+                          return (
+                          <li
+                            key={cls._id}
+                            className={`${styles.classItem} ${styles[locClass]}`}
+                            style={{ borderLeft: `4px solid ${getColorForKey(cls._id || cls.title || (cls.subject || ''))}` }}
+                          >
+                            
+                            <div className={styles.itemHeader}>
+                                <div className={styles.timeBox}>
+                                    <span className={styles.timeText}>{cls.startTime}</span>
+                                    <span className={styles.durationText}>- {cls.endTime}</span>
+                                </div>
+                                {/* Mobile Actions (Top Right) */}
+                                <div className={`${styles.actionGroup} ${styles.mobileActions}`}>
+                                    <button className={`${styles.actionBtn} ${styles.btnEdit}`} onClick={() => handleEdit(cls)}>
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleDelete(cls._id)}>
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             </div>
-                            {/* Mobile Actions (Top Right) */}
-                            <div className={`${styles.actionGroup} ${styles.mobileActions}`}>
-                                <button className={`${styles.actionBtn} ${styles.btnEdit}`} onClick={() => handleEdit(cls)}>
-                                    <Edit2 size={16} />
-                                </button>
-                                <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleDelete(cls._id)}>
-                                    <Trash2 size={16} />
-                                </button>
+
+                            <div className={styles.infoBox}>
+                              <div className={styles.subjectRow}>
+                                <span className={styles.subjectTitle}>
+                                  {classNum ? `Class ${classNum}` : (cls.grade || '')}
+                                </span>
+                                {cls.category === 'EXTERNAL' ? (
+                                   <span className={`${styles.badge} ${styles.badgeExternal}`}>
+                                     <Lock size={10} style={{marginRight:3}}/> Fixed
+                                   </span>
+                                ) : (
+                                   <span className={`${styles.badge} ${styles.badgePersonal}`}>
+                                     <User size={10} style={{marginRight:3}}/> Personal
+                                   </span>
+                                )}
+                                <span className={`${styles.badge} ${
+                                  cls.type === 'Theory' ? styles.badgeTheory :
+                                  cls.type === 'Revision' ? styles.badgeRevision :
+                                  styles.badgePaper
+                                }`}>
+                                  {cls.type}
+                                </span>
+                                <span className={`${styles.badge} ${
+                                  cls.medium === 'English' ? styles.badgeEnglish :
+                                  styles.badgeTamil
+                                }`}>
+                                  {cls.medium}
+                                </span>
+                              </div>
+                              <div className={styles.locationRow}>
+                                <MapPin size={14} className={styles.icon} /> {cls.location}
+                              </div>
                             </div>
-                        </div>
 
-                        <div className={styles.infoBox}>
-                          <div className={styles.subjectRow}>
-                            <span className={styles.subjectTitle}>
-                              {classNum ? `Class ${classNum}` : (cls.grade || '')}
-                            </span>
-                            {cls.category === 'EXTERNAL' ? (
-                               <span className={`${styles.badge} ${styles.badgeExternal}`}>
-                                 <Lock size={10} style={{marginRight:3}}/> Fixed
-                               </span>
-                            ) : (
-                               <span className={`${styles.badge} ${styles.badgePersonal}`}>
-                                 <User size={10} style={{marginRight:3}}/> Personal
-                               </span>
-                            )}
-                            <span className={`${styles.badge} ${
-                              cls.type === 'Theory' ? styles.badgeTheory :
-                              cls.type === 'Revision' ? styles.badgeRevision :
-                              styles.badgePaper
-                            }`}>
-                              {cls.type}
-                            </span>
-                            <span className={`${styles.badge} ${
-                              cls.medium === 'English' ? styles.badgeEnglish :
-                              styles.badgeTamil
-                            }`}>
-                              {cls.medium}
-                            </span>
-                          </div>
-                          <div className={styles.locationRow}>
-                            <MapPin size={14} className={styles.icon} /> {cls.location}
-                          </div>
-                        </div>
+                            {/* Desktop Actions (Right Side) */}
+                            <div className={`${styles.actionGroup} ${styles.desktopActions}`}>
+                              <button className={`${styles.actionBtn} ${styles.btnEdit}`} onClick={() => handleEdit(cls)}>
+                                <Edit2 size={16} />
+                              </button>
+                              <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleDelete(cls._id)}>
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })}
 
-                        {/* Desktop Actions (Right Side) */}
-                        <div className={`${styles.actionGroup} ${styles.desktopActions}`}>
-                          <button className={`${styles.actionBtn} ${styles.btnEdit}`} onClick={() => handleEdit(cls)}>
-                            <Edit2 size={16} />
-                          </button>
-                          <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleDelete(cls._id)}>
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-
-            {!loading && !error && classes.length === 0 && (
-              <div className={styles.emptyState}>
-                <p>No classes yet. Start by adding your Fixed External Classes.</p>
-              </div>
+                {!loading && !error && classes.length === 0 && (
+                  <div className={styles.emptyState}>
+                    <p>No classes yet. Start by adding your Fixed External Classes.</p>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
